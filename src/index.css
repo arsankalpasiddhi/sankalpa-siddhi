@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-parchment: #F7F4EE;
+    --deep-blue: #1E3A8A;
+    --saffron: #E06A3B;
+    --amber-gold: #D97706;
+  }
+
+  html {
+    scroll-padding-top: 140px;
+  }
+
+  body {
+    background-color: #F7F4EE;
+    color: #1F2937;
+    overflow-x: hidden;
+  }
+}
+
+/* Seamless logo blending */
+.blend-logo {
+  mix-blend-mode: multiply;
+  filter: contrast(1.1);
+}
+
+/* Global Watercolor Parchment Paper Canvas Background Wrappers */
+.parchment-global-bg {
+  background-color: #F7F4EE;
+  background-image: 
+    radial-gradient(ellipse at 10% 5%, rgba(224, 106, 59, 0.12) 0%, rgba(217, 119, 6, 0.07) 35%, transparent 60%),
+    radial-gradient(ellipse at 90% 5%, rgba(217, 119, 6, 0.12) 0%, rgba(224, 106, 59, 0.07) 40%, transparent 65%),
+    radial-gradient(ellipse at 95% 90%, rgba(30, 58, 138, 0.09) 0%, rgba(224, 106, 59, 0.04) 35%, transparent 60%),
+    radial-gradient(ellipse at 5% 50%, rgba(30, 58, 138, 0.05) 0%, transparent 50%);
+}
+
+/* Enlarged Ambient Logo Watermark Background Overlay (Ultra-faint 5% Opacity) */
+.logo-pattern-bg-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05; /* Ultra-faint 5% opacity scaled large across parchment */
+  filter: grayscale(100%) sepia(30%) blur(0.5px);
+  mix-blend-mode: multiply;
+  background-image: url("/images/logo.jpeg");
+  background-repeat: repeat;
+  background-size: 550px 550px;
+  background-position: center center;
+}
+
+/* Glassmorphism Card Utility */
+.glass-card {
+  background-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(180, 83, 9, 0.12);
+  box-shadow: 0 4px 20px rgba(30, 58, 138, 0.04), 0 2px 8px rgba(224, 106, 59, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 30px rgba(30, 58, 138, 0.08), 0 4px 12px rgba(224, 106, 59, 0.08);
+  border-color: rgba(180, 83, 9, 0.25);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 5px;
+  border: 2px solid #FAF7F2;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E06A3B;
+}
+
+/* Keyframe Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(224, 106, 59, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(224, 106, 59, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s infinite ease-in-out;
+}
