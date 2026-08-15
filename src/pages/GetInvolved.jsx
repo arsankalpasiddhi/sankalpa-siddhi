@@ -17,6 +17,23 @@ export default function GetInvolved({ initialTab = 'volunteer', setInvolvedTab }
     if (setInvolvedTab) setInvolvedTab(tab);
   };
 
+  // Input Sanitizer helper to prevent XSS injection
+  const sanitizeInput = (input) => {
+    if (typeof input !== 'string') return input;
+    return input
+      .trim()
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+=/gi, '');
+  };
+
+  // Anti-Bot Honeypot & Rate-Limiting State
+  const [honeypot, setHoneypot] = useState('');
+  const [isVolunteerSubmitting, setIsVolunteerSubmitting] = useState(false);
+  const [isSchoolSubmitting, setIsSchoolSubmitting] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(0);
+
   // Volunteer Form State
   const [volunteerForm, setVolunteerForm] = useState({
     fullName: '',
@@ -43,60 +60,130 @@ export default function GetInvolved({ initialTab = 'volunteer', setInvolvedTab }
   const [schoolSubmitted, setSchoolSubmitted] = useState(false);
   const [schoolError, setSchoolError] = useState('');
 
-  // Volunteer Submit Handler with mailto integration & validation
+  // Volunteer Submit Handler with sanitization, honeypot & cooldown
   const handleVolunteerSubmit = (e) => {
     e.preventDefault();
     setVolunteerError('');
-    if (!volunteerForm.fullName.trim() || !volunteerForm.email.trim() || !volunteerForm.phone.trim() || !volunteerForm.location.trim()) {
+
+    // Anti-bot honeypot check
+    if (honeypot.trim() !== '') {
+      setVolunteerSubmitted(true);
+      return;
+    }
+
+    if (cooldownTime > 0) {
+      setVolunteerError(`Please wait ${cooldownTime}s before submitting again.`);
+      return;
+    }
+
+    const cleanName = sanitizeInput(volunteerForm.fullName);
+    const cleanEmail = sanitizeInput(volunteerForm.email);
+    const cleanPhone = sanitizeInput(volunteerForm.phone);
+    const cleanLocation = sanitizeInput(volunteerForm.location);
+    const cleanOtherExpertise = sanitizeInput(volunteerForm.otherExpertise);
+    const cleanMessage = sanitizeInput(volunteerForm.message);
+
+    if (!cleanName || !cleanEmail || !cleanPhone || !cleanLocation) {
       setVolunteerError('Please fill out all required fields marked with *');
       return;
     }
-    if (volunteerForm.expertise === 'Others' && !volunteerForm.otherExpertise.trim()) {
+    if (volunteerForm.expertise === 'Others' && !cleanOtherExpertise) {
       setVolunteerError('Please specify your custom expertise in the field provided.');
       return;
     }
 
+    setIsVolunteerSubmitting(true);
+
     const selectedExpertise = volunteerForm.expertise === 'Others'
-      ? `Others (${volunteerForm.otherExpertise})`
+      ? `Others (${cleanOtherExpertise})`
       : volunteerForm.expertise;
 
-    const subject = encodeURIComponent(`Volunteer Application - ${volunteerForm.fullName}`);
+    const subject = encodeURIComponent(`Volunteer Application - ${cleanName}`);
     const body = encodeURIComponent(
       `Sankalpa Siddhi Volunteer Application\n` +
       `-----------------------------------------\n` +
-      `Full Name: ${volunteerForm.fullName}\n` +
-      `Email: ${volunteerForm.email}\n` +
-      `Phone: ${volunteerForm.phone}\n` +
-      `Location: ${volunteerForm.location}\n` +
+      `Full Name: ${cleanName}\n` +
+      `Email: ${cleanEmail}\n` +
+      `Phone: ${cleanPhone}\n` +
+      `Location: ${cleanLocation}\n` +
       `Area of Expertise: ${selectedExpertise}\n` +
-      `Message: ${volunteerForm.message}\n`
+      `Message: ${cleanMessage}\n`
     );
     window.location.href = `mailto:akellaraghavendra@gmail.com?subject=${subject}&body=${body}`;
     setVolunteerSubmitted(true);
+    setIsVolunteerSubmitting(false);
+
+    // 5-second anti-spam cooldown
+    setCooldownTime(5);
+    const timer = setInterval(() => {
+      setCooldownTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
-  // School Request Submit Handler with mailto integration & validation
+  // School Request Submit Handler with sanitization, honeypot & cooldown
   const handleSchoolSubmit = (e) => {
     e.preventDefault();
     setSchoolError('');
-    if (!schoolForm.schoolName.trim() || !schoolForm.mandalDistrict.trim() || !schoolForm.principalName.trim() || !schoolForm.phone.trim() || !schoolForm.studentCount) {
+
+    // Anti-bot honeypot check
+    if (honeypot.trim() !== '') {
+      setSchoolSubmitted(true);
+      return;
+    }
+
+    if (cooldownTime > 0) {
+      setSchoolError(`Please wait ${cooldownTime}s before submitting again.`);
+      return;
+    }
+
+    const cleanSchoolName = sanitizeInput(schoolForm.schoolName);
+    const cleanMandalDistrict = sanitizeInput(schoolForm.mandalDistrict);
+    const cleanPrincipalName = sanitizeInput(schoolForm.principalName);
+    const cleanDesignation = sanitizeInput(schoolForm.designation);
+    const cleanPhone = sanitizeInput(schoolForm.phone);
+    const cleanEmail = sanitizeInput(schoolForm.email);
+    const cleanStudentCount = sanitizeInput(schoolForm.studentCount);
+
+    if (!cleanSchoolName || !cleanMandalDistrict || !cleanPrincipalName || !cleanPhone || !cleanStudentCount) {
       setSchoolError('Please fill out all required fields marked with *');
       return;
     }
-    const subject = encodeURIComponent(`School Registration Request - ${schoolForm.schoolName}`);
+
+    setIsSchoolSubmitting(true);
+
+    const subject = encodeURIComponent(`School Registration Request - ${cleanSchoolName}`);
     const body = encodeURIComponent(
       `Sankalpa Siddhi School Registration Request\n` +
       `-----------------------------------------\n` +
-      `School Name: ${schoolForm.schoolName}\n` +
-      `District / Mandal: ${schoolForm.mandalDistrict}\n` +
-      `Principal / Contact Person: ${schoolForm.principalName}\n` +
-      `Designation: ${schoolForm.designation}\n` +
-      `Phone: ${schoolForm.phone}\n` +
-      `Email: ${schoolForm.email}\n` +
-      `Student Count (6th-10th): ${schoolForm.studentCount}\n`
+      `School Name: ${cleanSchoolName}\n` +
+      `District / Mandal: ${cleanMandalDistrict}\n` +
+      `Principal / Contact Person: ${cleanPrincipalName}\n` +
+      `Designation: ${cleanDesignation}\n` +
+      `Phone: ${cleanPhone}\n` +
+      `Email: ${cleanEmail}\n` +
+      `Student Count (6th-10th): ${cleanStudentCount}\n`
     );
     window.location.href = `mailto:akellaraghavendra@gmail.com?subject=${subject}&body=${body}`;
     setSchoolSubmitted(true);
+    setIsSchoolSubmitting(false);
+
+    // 5-second anti-spam cooldown
+    setCooldownTime(5);
+    const timer = setInterval(() => {
+      setCooldownTime((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   return (
@@ -286,11 +373,32 @@ export default function GetInvolved({ initialTab = 'volunteer', setInvolvedTab }
                       />
                     </div>
 
+                    {/* Invisible Anti-Bot Honeypot Field */}
+                    <div className="hidden opacity-0 absolute -z-50 pointer-events-none" aria-hidden="true">
+                      <input
+                        type="text"
+                        name="_gotcha"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                      />
+                    </div>
+
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-deepblue-900 to-slate-950 hover:from-slate-950 hover:to-deepblue-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      disabled={isVolunteerSubmitting || cooldownTime > 0}
+                      className="w-full py-3.5 bg-gradient-to-r from-deepblue-900 to-slate-950 hover:from-slate-950 hover:to-deepblue-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Send className="w-4 h-4 text-saffron-400" /> Submit Volunteer Application
+                      {isVolunteerSubmitting ? (
+                        <span>Submitting...</span>
+                      ) : cooldownTime > 0 ? (
+                        <span>Please wait {cooldownTime}s...</span>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 text-saffron-400" /> Submit Volunteer Application
+                        </>
+                      )}
                     </button>
                   </form>
                 )}
@@ -439,11 +547,32 @@ export default function GetInvolved({ initialTab = 'volunteer', setInvolvedTab }
                       </div>
                     </div>
 
+                    {/* Invisible Anti-Bot Honeypot Field */}
+                    <div className="hidden opacity-0 absolute -z-50 pointer-events-none" aria-hidden="true">
+                      <input
+                        type="text"
+                        name="_gotcha"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                      />
+                    </div>
+
                     <button
                       type="submit"
-                      className="w-full py-3.5 bg-gradient-to-r from-saffron-500 to-amber-600 hover:from-saffron-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-glow-saffron flex items-center justify-center gap-2 cursor-pointer"
+                      disabled={isSchoolSubmitting || cooldownTime > 0}
+                      className="w-full py-3.5 bg-gradient-to-r from-saffron-500 to-amber-600 hover:from-saffron-600 hover:to-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-glow-saffron flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Send className="w-4 h-4 text-white" /> Submit School Registration Request
+                      {isSchoolSubmitting ? (
+                        <span>Submitting...</span>
+                      ) : cooldownTime > 0 ? (
+                        <span>Please wait {cooldownTime}s...</span>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 text-white" /> Submit School Registration Request
+                        </>
+                      )}
                     </button>
                   </form>
                 )}

@@ -74,56 +74,29 @@ web_modules/
 
 # dotenv environment variable files
 .env
+.env.*
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
 
-# parcel-bundler cache
-.cache
-.parcel-cache
+# Keys & Certificates
+*.pem
+*.key
+*.p12
+*.pfx
 
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / dev activity
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public-gatsby/
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# Tern JS language server
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn output
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/sdks
-!.yarn/versions
+# Archives & Backups
+*.zip
+*.tar.gz
+*.7z
 
 # System / OS
 .DS_Store
 Thumbs.db
+ehthumbs.db
 
-# Vite build output
+# Build & Vite Output
 dist/
+build/
+out/
